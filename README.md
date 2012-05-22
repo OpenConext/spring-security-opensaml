@@ -5,20 +5,33 @@
 This is an Spring Security module for authentication and authorization with Security Assertion Markup Language.
 It uses the [OpenSAML library](http://www.opensaml.org/) from Internet2.
 
-## Step 1 Create a provisioner
+This documentation contains references to identity providers in a closed development environment. Replace them with the URLs and certificates of your own identity provider.
 
-When a user logs in, your application can create or update it's existing profile.
-Create a class that implements the *nl.surfnet.spring.security.opensaml.Provisioner* interface.
-Next, create a bean of the class in your Spring conext.
+## Add the Spring Security OpenSAML dependency
+
+Add the following dependency to your project (check this project for the latest version)
 
 ```xml
-<bean id="samlProvisioner" class="org.apache.rave.portal.service.ProvisionerImpl">
-  <property name="newAccountService" ref="defaultNewAccountService"/>
-  <property name="userService" ref="userService"/>
-</bean>
+<dependency>
+  <groupId>org.surfnet.coin</groupId>
+  <artifactId>spring-security-opensaml</artifactId>
+  <version>${spring-security-opensaml.version}</version>
+</dependency>
 ```
 
-## Step 2 Add the certificates of your IDP
+## Configure Spring security context
+
+### Create a provisioner
+
+When a user logs in, your application can create or update its existing profile.
+Create a class that implements the `nl.surfnet.spring.security.opensaml.Provisioner` interface.
+Next, create a bean of this class in your Spring context.
+
+```xml
+<bean id="samlProvisioner" class="org.example.project.provisioning.SAMLProvisioner"/>
+```
+
+### Add the certificates of your IDP
 
 ```xml
 <bean id="samlCertificateStore" class="nl.surfnet.spring.security.opensaml.CertificateStoreImpl">
@@ -31,7 +44,7 @@ Next, create a bean of the class in your Spring conext.
 </bean>
 ```
 
-## Step 3 Create a service provider
+### Create a service provider
 
 ```xml
 <opensaml:service-provider id="samlAuthenticationProvider"
@@ -44,18 +57,17 @@ Next, create a bean of the class in your Spring conext.
                          authentication-manager-ref="authenticationManager" />
 ```
 
-## Step 4 Add security filter chain configuration
+### Add security filter chain configuration
 
 Within `<security:http>` add the following configuration
 
 ```xml
 <security:custom-filter position="PRE_AUTH_FILTER" ref="samlPreAuthFilter" />
 <security:intercept-url pattern="/OpenSAML.sso/Login" access="permitAll"/>
-<security:intercept-url pattern="${ASSERTION_CONSUMER_URI}"
-                         access="hasAnyRole(ROLE_ANONYMOUS,ROLE_ADMIN,ROLE_USER)"/>
+<security:intercept-url pattern="${ASSERTION_CONSUMER_URI}" access="hasAnyRole(ROLE_ANONYMOUS,ROLE_ADMIN,ROLE_USER)"/>
 ```
 
-## Step 5 Set the authentication provider
+### Set the authentication provider
 
 ```xml
 <security:authentication-manager alias="authenticationManager">
@@ -63,7 +75,7 @@ Within `<security:http>` add the following configuration
 </security:authentication-manager>
 ```
 
-## Step 6 Add an AuthN request controller
+### Add an AuthN request controller
 
 ```xml
 <bean id="authnRequestController" class="nl.surfnet.spring.security.opensaml.controller.AuthnRequestController">
@@ -73,7 +85,88 @@ Within `<security:http>` add the following configuration
 </bean>
 ```
 
-## Step 7 Create either a redirect or a WAYF page
+## Set properties for OpenSAML
+
+Add a properties file for the Spring Security OpenSAML configuration (in this example `opensaml.properties`):
+
+```
+ISSUING_ENTITY_ID=http://local-myapp
+
+WEB_APPLICATION_CHANNEL=http
+WEB_APPLICATION_HOST_AND_PORT=localhost:8080
+WEB_APPLICATION_CONTEXT_PATH=/myapp
+
+ASSERTION_CONSUMER_URI=/AssertionConsumerService
+ASSERTION_CONSUMER_URL=${WEB_APPLICATION_CHANNEL}://${WEB_APPLICATION_HOST_AND_PORT}${WEB_APPLICATION_CONTEXT_PATH}${ASSERTION_CONSUMER_URI}
+
+MAX_PARSER_POOL_SIZE=2
+
+REPLAY_CACHE_LIFE_IN_MILLIS=14400000
+ISSUE_INSTANT_CHECK_CLOCK_SKEW_IN_SECONDS=90
+ISSUE_INSTANT_CHECK_VALIDITY_TIME_IN_SECONDS=300
+```
+
+Load this property file from your application context:
+
+```xml
+<bean id="propertyResolver" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+  <property name="location" value="classpath:opensaml.properties"/>
+</bean>
+```
+
+
+## Configure the login page
+
+### Create a dispatcher servlet
+
+Create an `opensaml-dispatcher-servlet.xml` file inside the `WEB-INF` folder with the following contents:
+
+```xml
+<bean id="openSAMLDispatcherProperties" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+  <property name="locations">
+    <list>
+      <value>classpath:opensaml.properties</value>
+    </list>
+  </property>
+</bean>
+
+<mvc:annotation-driven/>
+
+<bean id="authnRequestController" class="nl.surfnet.spring.security.opensaml.controller.AuthnRequestController">
+  <property name="assertionConsumerServiceURL" value="${ASSERTION_CONSUMER_URL}" />
+  <property name="SAMLMessageHandler" ref="samlMessageHandler" />
+  <property name="entityID" value="${ISSUING_ENTITY_ID}"/>
+</bean>
+```
+
+### Configure the web.xml
+
+Add a filter-mapping for the Spring Security filter chain and the servlet-mapping for the OpenSAML.sso/Login url:
+
+```xml
+<filter>
+  <filter-name>springSecurityFilterChain</filter-name>
+  <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+</filter>
+
+<filter-mapping>
+  <filter-name>springSecurityFilterChain</filter-name>
+  <url-pattern>/*</url-pattern>
+</filter-mapping>
+
+<servlet>
+  <servlet-name>opensaml-dispatcher</servlet-name>
+  <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+  <load-on-startup>1</load-on-startup>
+</servlet>
+
+<servlet-mapping>
+  <servlet-name>opensaml-dispatcher</servlet-name>
+  <url-pattern>/OpenSAML.sso/Login</url-pattern>
+</servlet-mapping>
+```
+
+### Create either a redirect or a WAYF page
 
 When your application requires a user is logged in you can redirect it to the AuthN request controller.
 
@@ -105,5 +198,4 @@ Example of myloginpage.jsp:
     Login at Mujina
 </a>
 ```
-
 
