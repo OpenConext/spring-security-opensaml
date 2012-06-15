@@ -209,14 +209,14 @@
 
   <distributionManagement>
     <repository>
-      <id>coin-repo</id>
-      <name>OpenConext releases</name>
-      <url>dav:http://bamboo-dev.coin.surfnetlabs.nl</url>
+      <id>openconext-releases</id>
+      <name>OpenConext public releases repository</name>
+      <url>dav:https://build.surfconext.nl/repository/public/releases</url>
     </repository>
     <snapshotRepository>
-      <id>repo</id>
-      <name>OpenConext snapshots</name>
-      <url>dav:http://bamboo-dev.coin.surfnetlabs.nl</url>
+      <id>openconext-snapshots</id>
+      <name>OpenConext public snapshot repository</name>
+      <url>dav:https://build.surfconext.nl/repository/public/snapshots</url>
     </snapshotRepository>
   </distributionManagement>
 
