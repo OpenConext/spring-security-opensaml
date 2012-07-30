@@ -96,7 +96,9 @@ public class AuthnRequestController {
             criteriaSet.add(new EntityIDCriteria(entityID));
             criteriaSet.add(new UsageCriteria(UsageType.SIGNING));
 
-            samlMessageHandler.sendSAMLMessage(authnReqeust, endpoint, response);
+          // Could be injected from somewhere. Not yet needed currently.
+          String relayState = null;
+            samlMessageHandler.sendSAMLMessage(authnReqeust, endpoint, response, relayState);
         } catch (MessageEncodingException mee) {
             log.error("Could not send authnRequest to Identity Provider.", mee);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

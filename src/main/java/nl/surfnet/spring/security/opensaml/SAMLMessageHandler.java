@@ -28,7 +28,8 @@ import org.opensaml.xml.security.SecurityException;
 
 public interface SAMLMessageHandler {
 
-    public void sendSAMLMessage(SignableSAMLObject samlMessage, Endpoint endpoint, HttpServletResponse response) throws MessageEncodingException;
+    public void sendSAMLMessage(SignableSAMLObject samlMessage, Endpoint endpoint,
+                                HttpServletResponse response, String relayState) throws MessageEncodingException;
 
     public SAMLMessageContext extractSAMLMessageContext(HttpServletRequest request) throws MessageDecodingException, SecurityException;
 

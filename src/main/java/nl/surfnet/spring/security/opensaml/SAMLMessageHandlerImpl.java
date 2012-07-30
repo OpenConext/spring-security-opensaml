@@ -86,7 +86,7 @@ public class SAMLMessageHandlerImpl implements SAMLMessageHandler, InitializingB
 
     public void sendSAMLMessage(SignableSAMLObject samlMessage,
                                 Endpoint endpoint,
-                                HttpServletResponse response) throws MessageEncodingException {
+                                HttpServletResponse response, String relayState) throws MessageEncodingException {
 
         HttpServletResponseAdapter outTransport = new HttpServletResponseAdapter(response, false);
 
@@ -96,6 +96,7 @@ public class SAMLMessageHandlerImpl implements SAMLMessageHandler, InitializingB
         messageContext.setPeerEntityEndpoint(endpoint);
         messageContext.setOutboundSAMLMessage(samlMessage);
         messageContext.setOutboundMessageIssuer(entityId);
+        messageContext.setRelayState(relayState);
 
         encoder.encode(messageContext);
 
