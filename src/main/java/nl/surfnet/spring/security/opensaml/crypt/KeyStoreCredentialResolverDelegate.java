@@ -23,17 +23,18 @@ import org.opensaml.xml.security.CriteriaSet;
 import org.opensaml.xml.security.SecurityException;
 import org.opensaml.xml.security.credential.Credential;
 import org.opensaml.xml.security.credential.CredentialResolver;
+import org.opensaml.xml.security.credential.KeyStoreCredentialResolver;
 import org.springframework.beans.factory.annotation.Required;
 
-import nl.surfnet.spring.security.opensaml.CertificateStore;
+import nl.surfnet.spring.security.opensaml.KeyStore;
 
 public class KeyStoreCredentialResolverDelegate implements CredentialResolver {
 
-    private CertificateStore certificateStore;
+    private KeyStore keyStore;
 
     @Required
-    public void setCertificateStore(final CertificateStore certificateStore) {
-        this.certificateStore = certificateStore;
+    public void setKeyStore(final KeyStore keyStore) {
+        this.keyStore = keyStore;
     }
 
     public Iterable<Credential> resolve(CriteriaSet criteriaSet) throws SecurityException {
@@ -44,8 +45,8 @@ public class KeyStoreCredentialResolverDelegate implements CredentialResolver {
         return getKeyStoreCredentialResolver().resolveSingle(criteriaSet);
     }
 
-    public org.opensaml.xml.security.credential.KeyStoreCredentialResolver getKeyStoreCredentialResolver() {
+    public KeyStoreCredentialResolver getKeyStoreCredentialResolver() {
         Map<String, String> privateKeyPasswords = Collections.emptyMap();
-        return new org.opensaml.xml.security.credential.KeyStoreCredentialResolver(certificateStore.getKeyStore(), privateKeyPasswords);
+        return new KeyStoreCredentialResolver(keyStore.getJavaSecurityKeyStore(), privateKeyPasswords);
     }
 }
