@@ -26,6 +26,8 @@ import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.SingleSignOnService;
 import org.opensaml.ws.message.encoder.MessageEncodingException;
 import org.opensaml.xml.security.CriteriaSet;
+import org.opensaml.xml.security.credential.Credential;
+import org.opensaml.xml.security.credential.CredentialResolver;
 import org.opensaml.xml.security.credential.UsageType;
 import org.opensaml.xml.security.criteria.EntityIDCriteria;
 import org.opensaml.xml.security.criteria.UsageCriteria;
@@ -45,63 +47,75 @@ import nl.surfnet.spring.security.opensaml.xml.EndpointGenerator;
 
 @Controller
 public class AuthnRequestController {
-    private final static Logger log = LoggerFactory.getLogger(AuthnRequestController.class);
+  private final static Logger LOG = LoggerFactory.getLogger(AuthnRequestController.class);
 
-    private final TimeService timeService;
-    private final IDService idService;
+  private final TimeService timeService;
+  private final IDService idService;
 
-    private SAMLMessageHandler samlMessageHandler;
+  private SAMLMessageHandler samlMessageHandler;
 
-    private String assertionConsumerServiceURL;
+  private String assertionConsumerServiceURL;
 
-    private String entityID;
+  private String entityID;
 
-    public AuthnRequestController() {
-        this.timeService = new TimeService();
-        this.idService = new IDService();
+  private CredentialResolver credentialResolver;
+
+  public AuthnRequestController() {
+    this.timeService = new TimeService();
+    this.idService = new IDService();
+  }
+
+  @Required
+  public void setCredentialResolver(CredentialResolver cr) {
+    this.credentialResolver = cr;
+  }
+
+  @Required
+  public void setSAMLMessageHandler(SAMLMessageHandler samlMessageHandler) {
+    this.samlMessageHandler = samlMessageHandler;
+  }
+
+  @Required
+  public void setAssertionConsumerServiceURL(String assertionConsumerServiceURL) {
+    this.assertionConsumerServiceURL = assertionConsumerServiceURL;
+  }
+
+  @Required
+  public void setEntityID(final String entityID) {
+    this.entityID = entityID;
+  }
+
+  @RequestMapping(value = {"/OpenSAML.sso/Login"}, method = RequestMethod.GET)
+  public void commence(
+    @RequestParam(value = "target") String target,
+    HttpServletRequest request,
+    HttpServletResponse response) throws IOException {
+
+    AuthnRequestGenerator authnRequestGenerator = new AuthnRequestGenerator(entityID, timeService, idService);
+    EndpointGenerator endpointGenerator = new EndpointGenerator();
+
+    Endpoint endpoint = endpointGenerator.generateEndpoint(SingleSignOnService.DEFAULT_ELEMENT_NAME, target, assertionConsumerServiceURL);
+
+    AuthnRequest authnReqeust = authnRequestGenerator.generateAuthnRequest(target, assertionConsumerServiceURL);
+
+    LOG.debug("Sending authnRequest to {}", target);
+
+    Credential signingCredential;
+    try {
+      CriteriaSet criteriaSet = new CriteriaSet();
+      criteriaSet.add(new EntityIDCriteria(entityID));
+      criteriaSet.add(new UsageCriteria(UsageType.SIGNING));
+      signingCredential = credentialResolver.resolveSingle(criteriaSet);
+
+      // Could be injected from somewhere. Not yet needed currently.
+      String relayState = null;
+
+      samlMessageHandler.sendSAMLMessage(authnReqeust, endpoint, response, relayState, signingCredential);
+    } catch (MessageEncodingException mee) {
+      LOG.error("Could not send authnRequest to Identity Provider.", mee);
+      response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+    } catch (org.opensaml.xml.security.SecurityException e) {
+      LOG.error("Could not send authnRequest to Identity Provider.", e);
     }
-
-    @Required
-    public void setSAMLMessageHandler(SAMLMessageHandler samlMessageHandler) {
-        this.samlMessageHandler = samlMessageHandler;
-    }
-
-    @Required
-    public void setAssertionConsumerServiceURL(String assertionConsumerServiceURL) {
-        this.assertionConsumerServiceURL = assertionConsumerServiceURL;
-    }
-
-    @Required
-    public void setEntityID(final String entityID) {
-        this.entityID = entityID;
-    }
-
-    @RequestMapping(value = {"/OpenSAML.sso/Login"}, method = RequestMethod.GET)
-    public void commence(
-            @RequestParam(value="target") String target,
-            HttpServletRequest request,
-            HttpServletResponse response) throws IOException {
-
-        AuthnRequestGenerator authnRequestGenerator = new AuthnRequestGenerator(entityID, timeService, idService);
-        EndpointGenerator endpointGenerator = new EndpointGenerator();
-
-        Endpoint endpoint = endpointGenerator.generateEndpoint(SingleSignOnService.DEFAULT_ELEMENT_NAME, target, assertionConsumerServiceURL);
-
-        AuthnRequest authnReqeust = authnRequestGenerator.generateAuthnRequest(target, assertionConsumerServiceURL);
-
-        log.debug("Sending authnRequest to {}", target);
-
-        try {
-            CriteriaSet criteriaSet = new CriteriaSet();
-            criteriaSet.add(new EntityIDCriteria(entityID));
-            criteriaSet.add(new UsageCriteria(UsageType.SIGNING));
-
-          // Could be injected from somewhere. Not yet needed currently.
-          String relayState = null;
-            samlMessageHandler.sendSAMLMessage(authnReqeust, endpoint, response, relayState);
-        } catch (MessageEncodingException mee) {
-            log.error("Could not send authnRequest to Identity Provider.", mee);
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        }
-    }
+  }
 }

@@ -16,37 +16,71 @@
 
 package nl.surfnet.spring.security.opensaml;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.beans.factory.InitializingBean;
+import org.apache.commons.ssl.Base64;
 import org.springframework.beans.factory.annotation.Required;
 
 import nl.surfnet.spring.security.opensaml.util.KeyStoreUtil;
 
-public class KeyStore implements InitializingBean {
-  private String keystorePassword;
+public class KeyStore {
+
+
+  private String keystorePassword = "secret";
+
   private java.security.KeyStore keyStore;
-  private Map<String, String> certificates;
+  private Map<String, String> passwords = new HashMap<String, String>();
+
+  public KeyStore() {
+    try {
+      keyStore = java.security.KeyStore.getInstance("JKS");
+      keyStore.load(null, keystorePassword.toCharArray());
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+  }
 
   @Required
   public void setCertificates(Map<String, String> certificates) {
-    this.certificates = certificates;
+    for (Map.Entry<String, String> entry : certificates.entrySet()) {
+      addCertificate(entry.getKey(), entry.getValue());
+    }
   }
 
   public java.security.KeyStore getJavaSecurityKeyStore() {
     return keyStore;
   }
 
-  public void afterPropertiesSet() throws Exception {
-    keystorePassword = "secret";
+  /**
+   * Add a private key (plus its certificate chain) to the given key store.
+   * @param alias alias of the key
+   * @param privateKey the private key in Base64 encoded BER format.
+   * @param certificate the certificate in PEM format, without ---BEGIN CER.... wrapper
+   * @param password password to protect key with
+   */
+  public void addPrivateKey(String alias, String privateKey, String certificate, String password) {
+    String wrappedCert = "-----BEGIN CERTIFICATE-----\n" + certificate + "\n-----END CERTIFICATE-----";
+    byte[] decodedKey = Base64.decodeBase64(privateKey.getBytes());
+
     try {
-      keyStore = java.security.KeyStore.getInstance("JKS");
-      keyStore.load(null, keystorePassword.toCharArray());
-      for (Map.Entry<String, String> entry : certificates.entrySet()) {
-        KeyStoreUtil.appendCertificateToKeyStore(keyStore, entry.getKey(), entry.getValue());
-      }
-    } catch (Exception e) {
+      KeyStoreUtil.appendKeyToKeyStore(keyStore, alias, new ByteArrayInputStream(wrappedCert.getBytes()),
+        new ByteArrayInputStream(decodedKey), password.toCharArray());
+      passwords.put(alias, password);
+    } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
+
+  public void addCertificate(String alias, String certificate) {
+    KeyStoreUtil.appendCertificateToKeyStore(keyStore, alias, certificate);
+  }
+
+  public Map<String, String> getPrivateKeyPasswords() {
+    return passwords;
+  }
 }
+

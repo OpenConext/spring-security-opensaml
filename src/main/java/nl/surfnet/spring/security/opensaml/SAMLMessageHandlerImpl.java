@@ -25,7 +25,6 @@ import org.opensaml.common.SignableSAMLObject;
 import org.opensaml.common.binding.BasicSAMLMessageContext;
 import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
-import org.opensaml.common.binding.encoding.SAMLMessageEncoder;
 import org.opensaml.saml2.binding.encoding.HTTPPostSimpleSignEncoder;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
@@ -34,81 +33,95 @@ import org.opensaml.ws.security.SecurityPolicyResolver;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 import org.opensaml.xml.security.SecurityException;
-import org.springframework.beans.factory.InitializingBean;
+import org.opensaml.xml.security.credential.Credential;
 import org.springframework.beans.factory.annotation.Required;
 
-public class SAMLMessageHandlerImpl implements SAMLMessageHandler, InitializingBean {
+public class SAMLMessageHandlerImpl implements SAMLMessageHandler {
 
-    private static final String SAML_REQUEST_POST_PARAM_NAME = "SAMLRequest";
-    private static final String SAML_RESPONSE_POST_PARAM_NAME = "SAMLResponse";
+  private static final String SAML_REQUEST_POST_PARAM_NAME = "SAMLRequest";
+  private static final String SAML_RESPONSE_POST_PARAM_NAME = "SAMLResponse";
 
-    private VelocityEngine velocityEngine;
+  private static String UNSIGNED_TEMPLATE = "/templates/saml2-post-simplesign-binding.vm";
+  private static String SIGNED_TEMPLATE = "/templates/saml2-post-simplesign-binding.vm";
 
-    private final SAMLMessageDecoder decoder;
-    private SAMLMessageEncoder encoder;
-    private final SecurityPolicyResolver resolver;
+  private VelocityEngine velocityEngine;
 
-    private String entityId;
+  private final SAMLMessageDecoder decoder;
+  private final SecurityPolicyResolver resolver;
 
-    public SAMLMessageHandlerImpl(SAMLMessageDecoder decoder, SecurityPolicyResolver resolver) {
-        super();
-        this.decoder = decoder;
-        this.resolver = resolver;
+  private String entityId;
+  private boolean needsSigning;
+
+  public SAMLMessageHandlerImpl(SAMLMessageDecoder decoder, SecurityPolicyResolver resolver) {
+    super();
+    this.decoder = decoder;
+    this.resolver = resolver;
+  }
+
+  @Required
+  public void setVelocityEngine(
+    VelocityEngine velocityEngine) {
+    this.velocityEngine = velocityEngine;
+  }
+
+  public void setEntityId(String entityId) {
+    this.entityId = entityId;
+  }
+
+  public SAMLMessageContext extractSAMLMessageContext(HttpServletRequest request) throws MessageDecodingException, SecurityException {
+    BasicSAMLMessageContext messageContext = new BasicSAMLMessageContext();
+
+    messageContext.setInboundMessageTransport(new HttpServletRequestAdapter(request));
+    messageContext.setSecurityPolicyResolver(resolver);
+
+    decoder.decode(messageContext);
+
+    return messageContext;
+  }
+
+  public void sendSAMLMessage(SignableSAMLObject samlMessage, Endpoint endpoint, HttpServletResponse response, String relayState, Credential signingCredential) throws MessageEncodingException {
+
+    HttpServletResponseAdapter outTransport = new HttpServletResponseAdapter(response, false);
+
+    BasicSAMLMessageContext messageContext = new BasicSAMLMessageContext();
+
+    messageContext.setOutboundMessageTransport(outTransport);
+    messageContext.setPeerEntityEndpoint(endpoint);
+    messageContext.setOutboundSAMLMessage(samlMessage);
+    if (isNeedsSigning()) {
+      messageContext.setOutboundSAMLMessageSigningCredential(signingCredential);
     }
 
-    @Required
-    public void setVelocityEngine(
-            VelocityEngine velocityEngine) {
-        this.velocityEngine = velocityEngine;
+    messageContext.setOutboundMessageIssuer(getEntityId());
+    messageContext.setRelayState(relayState);
+    HTTPPostSimpleSignEncoder encoder;
+
+    if (isNeedsSigning()) {
+      encoder = new HTTPPostSimpleSignEncoder(velocityEngine, SIGNED_TEMPLATE, true);
+    } else {
+      encoder = new HTTPPostSimpleSignEncoder(velocityEngine, UNSIGNED_TEMPLATE, true);
     }
 
-    public void afterPropertiesSet() throws Exception {
-        encoder = new HTTPPostSimpleSignEncoder(velocityEngine, "/templates/saml2-post-simplesign-binding.vm", true);
+    encoder.encode(messageContext);
+  }
+
+  public String extractSAMLMessage(HttpServletRequest request) {
+    if (StringUtils.isNotBlank(request.getParameter(SAML_REQUEST_POST_PARAM_NAME))) {
+      return request.getParameter(SAML_REQUEST_POST_PARAM_NAME);
+    } else {
+      return request.getParameter(SAML_RESPONSE_POST_PARAM_NAME);
     }
+  }
 
-    @Required
-    public void setEntityId(String entityId) {
-        this.entityId = entityId;
-    }
+  public void setNeedsSigning(boolean needsSigning) {
+    this.needsSigning = needsSigning;
+  }
 
-    public SAMLMessageContext extractSAMLMessageContext(HttpServletRequest request) throws MessageDecodingException, SecurityException {
+  public boolean isNeedsSigning() {
+    return needsSigning;
+  }
 
-        BasicSAMLMessageContext messageContext = new BasicSAMLMessageContext();
-
-        messageContext.setInboundMessageTransport(new HttpServletRequestAdapter(request));
-        messageContext.setSecurityPolicyResolver(resolver);
-
-        decoder.decode(messageContext);
-
-        return messageContext;
-
-    }
-
-    public void sendSAMLMessage(SignableSAMLObject samlMessage,
-                                Endpoint endpoint,
-                                HttpServletResponse response, String relayState) throws MessageEncodingException {
-
-        HttpServletResponseAdapter outTransport = new HttpServletResponseAdapter(response, false);
-
-        BasicSAMLMessageContext messageContext = new BasicSAMLMessageContext();
-
-        messageContext.setOutboundMessageTransport(outTransport);
-        messageContext.setPeerEntityEndpoint(endpoint);
-        messageContext.setOutboundSAMLMessage(samlMessage);
-        messageContext.setOutboundMessageIssuer(entityId);
-        messageContext.setRelayState(relayState);
-
-        encoder.encode(messageContext);
-
-    }
-
-    public String extractSAMLMessage(HttpServletRequest request) {
-        if (StringUtils.isNotBlank(request.getParameter(SAML_REQUEST_POST_PARAM_NAME))) {
-            return request.getParameter(SAML_REQUEST_POST_PARAM_NAME);
-        } else {
-            return request.getParameter(SAML_RESPONSE_POST_PARAM_NAME);
-        }
-    }
-
-
+  public String getEntityId() {
+    return entityId;
+  }
 }

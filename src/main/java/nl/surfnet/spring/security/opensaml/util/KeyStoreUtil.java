@@ -64,7 +64,7 @@ public class KeyStoreUtil {
    *                        something.csr -signkey something.key -out something.crt
    */
 
-  public static void appendToKeyStore(KeyStore keyStore, String keyAlias, InputStream certificateInputStream, InputStream privatekeyInputStream, char[] password) throws IOException {
+  public static void appendKeyToKeyStore(KeyStore keyStore, String keyAlias, InputStream certificateInputStream, InputStream privatekeyInputStream, char[] password) throws IOException {
 
     CertificateFactory certFact;
     Certificate cert;
@@ -97,15 +97,18 @@ public class KeyStoreUtil {
    * @param keyStore
    * @param keyAlias
    * @param pemCert
-   * @throws Exception
    */
-  public static void appendCertificateToKeyStore(KeyStore keyStore, String keyAlias, String pemCert) throws Exception {
+  public static void appendCertificateToKeyStore(KeyStore keyStore, String keyAlias, String pemCert) {
     String wrappedCert = "-----BEGIN CERTIFICATE-----\n" + pemCert + "\n-----END CERTIFICATE-----";
     ByteArrayInputStream certificateInputStream = new ByteArrayInputStream(wrappedCert.getBytes());
-    final CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-    final Certificate cert = certificateFactory.generateCertificate(certificateInputStream);
-    IOUtils.closeQuietly(certificateInputStream);
-    keyStore.setCertificateEntry(keyAlias, cert);
+    try {
+      final CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+      final Certificate cert = certificateFactory.generateCertificate(certificateInputStream);
+      IOUtils.closeQuietly(certificateInputStream);
+      keyStore.setCertificateEntry(keyAlias, cert);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
 }

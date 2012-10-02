@@ -25,14 +25,14 @@ import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
 import org.opensaml.ws.message.encoder.MessageEncodingException;
 import org.opensaml.xml.security.SecurityException;
+import org.opensaml.xml.security.credential.Credential;
 
 public interface SAMLMessageHandler {
 
-    public void sendSAMLMessage(SignableSAMLObject samlMessage, Endpoint endpoint,
-                                HttpServletResponse response, String relayState) throws MessageEncodingException;
+  void sendSAMLMessage(SignableSAMLObject samlMessage, Endpoint endpoint, HttpServletResponse response, String relayState, Credential signingCredential) throws MessageEncodingException;
 
-    public SAMLMessageContext extractSAMLMessageContext(HttpServletRequest request) throws MessageDecodingException, SecurityException;
+  SAMLMessageContext extractSAMLMessageContext(HttpServletRequest request) throws MessageDecodingException, SecurityException;
 
-    public String extractSAMLMessage(HttpServletRequest request);
+  String extractSAMLMessage(HttpServletRequest request);
 
 }

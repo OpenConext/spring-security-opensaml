@@ -16,9 +16,6 @@
 
 package nl.surfnet.spring.security.opensaml.crypt;
 
-import java.util.Collections;
-import java.util.Map;
-
 import org.opensaml.xml.security.CriteriaSet;
 import org.opensaml.xml.security.SecurityException;
 import org.opensaml.xml.security.credential.Credential;
@@ -46,7 +43,6 @@ public class KeyStoreCredentialResolverDelegate implements CredentialResolver {
     }
 
     public KeyStoreCredentialResolver getKeyStoreCredentialResolver() {
-        Map<String, String> privateKeyPasswords = Collections.emptyMap();
-        return new KeyStoreCredentialResolver(keyStore.getJavaSecurityKeyStore(), privateKeyPasswords);
+      return new KeyStoreCredentialResolver(keyStore.getJavaSecurityKeyStore(), keyStore.getPrivateKeyPasswords());
     }
 }
