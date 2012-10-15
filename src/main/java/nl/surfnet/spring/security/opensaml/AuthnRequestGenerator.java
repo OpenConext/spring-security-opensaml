@@ -56,7 +56,6 @@ public class AuthnRequestGenerator {
         authnRequest.setDestination(destination);
 
         authnRequest.setIssuer(issuerGenerator.generateIssuer());
-
         return authnRequest;
     }
 
