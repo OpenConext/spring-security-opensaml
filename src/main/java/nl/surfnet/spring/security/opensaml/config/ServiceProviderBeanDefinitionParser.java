@@ -19,6 +19,15 @@ package nl.surfnet.spring.security.opensaml.config;
 import java.io.IOException;
 import java.util.Properties;
 
+import nl.surfnet.spring.security.opensaml.AssertionConsumerImpl;
+import nl.surfnet.spring.security.opensaml.AuthenticationFailureHandlerImpl;
+import nl.surfnet.spring.security.opensaml.SAMLMessageHandlerImpl;
+import nl.surfnet.spring.security.opensaml.SAMLResponseAuthenticationProcessingFilter;
+import nl.surfnet.spring.security.opensaml.SAMLResponseAuthenticationProvider;
+import nl.surfnet.spring.security.opensaml.SecurityPolicyDelegate;
+import nl.surfnet.spring.security.opensaml.SignatureSecurityPolicyRule;
+import nl.surfnet.spring.security.opensaml.crypt.KeyStoreCredentialResolverDelegate;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.app.VelocityEngine;
 import org.opensaml.DefaultBootstrap;
@@ -39,15 +48,6 @@ import org.springframework.beans.factory.xml.ParserContext;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.ui.velocity.VelocityEngineFactoryBean;
 import org.w3c.dom.Element;
-
-import nl.surfnet.spring.security.opensaml.AssertionConsumerImpl;
-import nl.surfnet.spring.security.opensaml.AuthenticationFailureHandlerImpl;
-import nl.surfnet.spring.security.opensaml.SAMLMessageHandlerImpl;
-import nl.surfnet.spring.security.opensaml.SAMLResponseAuthenticationProcessingFilter;
-import nl.surfnet.spring.security.opensaml.SAMLResponseAuthenticationProvider;
-import nl.surfnet.spring.security.opensaml.SecurityPolicyDelegate;
-import nl.surfnet.spring.security.opensaml.SignatureSecurityPolicyRule;
-import nl.surfnet.spring.security.opensaml.crypt.KeyStoreCredentialResolverDelegate;
 
 public class ServiceProviderBeanDefinitionParser extends AbstractBeanDefinitionParser {
 
@@ -171,7 +171,7 @@ public class ServiceProviderBeanDefinitionParser extends AbstractBeanDefinitionP
 
         // KeyStore Credential Resolver
         BeanDefinitionBuilder keyStoreBuilder = BeanDefinitionBuilder.genericBeanDefinition(KeyStoreCredentialResolverDelegate.class);
-        keyStoreBuilder.addPropertyReference("certificateStore", certificatestoreRef);
+        keyStoreBuilder.addPropertyReference("keyStore", certificatestoreRef);
         parserContext.getRegistry().registerBeanDefinition(BEAN_KEYSTORECREDENTIALRESOLVER, keyStoreBuilder.getBeanDefinition());
 
         // Signature Rule Builder
