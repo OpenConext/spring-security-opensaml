@@ -21,6 +21,7 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.IOUtils;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.SingleSignOnService;
@@ -34,10 +35,12 @@ import org.opensaml.xml.security.criteria.UsageCriteria;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Required;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import nl.surfnet.spring.security.opensaml.AuthnRequestGenerator;
 import nl.surfnet.spring.security.opensaml.SAMLMessageHandler;
@@ -85,11 +88,9 @@ public class AuthnRequestController {
     this.entityID = entityID;
   }
 
-  @RequestMapping(value = {"/OpenSAML.sso/Login"}, method = RequestMethod.GET)
-  public void commence(
-    @RequestParam(value = "target") String target,
-    HttpServletRequest request,
-    HttpServletResponse response) throws IOException {
+  @RequestMapping(value = { "/OpenSAML.sso/Login" }, method = RequestMethod.GET)
+  public void commence(@RequestParam(value = "target") String target, HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
 
     AuthnRequestGenerator authnRequestGenerator = new AuthnRequestGenerator(entityID, timeService, idService);
     EndpointGenerator endpointGenerator = new EndpointGenerator();
@@ -117,5 +118,30 @@ public class AuthnRequestController {
     } catch (org.opensaml.xml.security.SecurityException e) {
       LOG.error("Could not send authnRequest to Identity Provider.", e);
     }
+  }
+
+  @RequestMapping(value = { "/OpenSAML.sso/Metadata" }, method = RequestMethod.GET)
+  public void metaData(HttpServletResponse response) throws IOException {
+    /*
+     * The old-fashioned way as Spring Security uses Spring < 3.1 and we
+     * therefore can't use the produces tag (see
+     * https://jira.springsource.org/browse/SPR-6702). This could be resolved
+     * but adding exclusions in the pom.xml, but this works and is not
+     * 'version-brittle"
+     * 
+     * see further https://rnd.feide.no/2010/01/05/
+     * metadata_aggregation_requirements_specification/#section_5_5_3
+     */
+    // TODO figure out what the best way is to inject the correct values into
+    // the AuthRequestController (e.g. this)
+    // TODO are we going to support signing (e.g. have two templates depending
+    // on the isSigning is true
+    // TODO documentation for SP's that want to use this
+    response.setHeader("Content-Type", "application/xml");
+    String result = IOUtils.toString(new ClassPathResource("metadata-template-sp.xml").getInputStream());
+    result = result.replaceAll("%SERVICENAME_EN%", "WIP");
+    response.getOutputStream().write(result.getBytes());
+    response.flushBuffer();
+
   }
 }
