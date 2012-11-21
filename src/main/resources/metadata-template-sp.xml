@@ -9,7 +9,7 @@
             Location="%ASSERTION_CONSUMER_SERVICE_URL%" index="1"/>
         <md:AttributeConsumingService index="1">
             <md:ServiceName xml:lang="en">%SERVICE_NAME_EN%</md:ServiceName>
-            <md:ServiceName xml:lang="en">%SERVICE_NAME_NL%</md:ServiceName>
+            <md:ServiceName xml:lang="nl">%SERVICE_NAME_NL%</md:ServiceName>
             <md:ServiceDescription xml:lang="en">%SERVICE_DESCRIPTION_EN%</md:ServiceDescription>
             <md:ServiceDescription xml:lang="nl">%SERVICE_DESCRIPTION_NL%</md:ServiceDescription>
         </md:AttributeConsumingService>
