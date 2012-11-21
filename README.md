@@ -106,7 +106,7 @@ contact-person-support-sur-name=SURFConext
 contact-person-support-email=beheer@surfconext.nl
 ```
 
-The actual matadata is available on the endpoint: "http://<hostname>/<component>/OpenSAML.sso/Metadata"
+The actual matadata is available on the endpoint: "http://hostname/applicationroot/OpenSAML.sso/Metadata"
 
 ## Set properties for OpenSAML
 
