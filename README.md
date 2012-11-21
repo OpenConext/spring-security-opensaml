@@ -1,7 +1,5 @@
 # Spring Security OpenSAML
 
-**Warning: this is Beta code, do not use it on production systems**
-
 This is an Spring Security module for authentication and authorization with Security Assertion Markup Language.
 It uses the [OpenSAML library](http://www.opensaml.org/) from Internet2.
 
@@ -82,8 +80,33 @@ Within `<security:http>` add the following configuration
   <property name="SAMLMessageHandler" ref="samlMessageHandler" />
   <property name="assertionConsumerServiceURL" value="${ASSERTION_CONSUMER_URL}" />
   <property name="entityID" value="${ISSUING_ENTITY_ID}"/>
+  <property name="credentialResolver" ref="samlKeyStoreCredentialResolverDelegate" />
+  <property name="metaDataProperties" value ="metadata.test.properties"/>
 </bean>
 ```
+
+The last property is the name of the properties file on the classpath to override the default metadata. An example:
+
+```
+service-name-en=SelfService
+service-name-nl=SelfService
+service-description-en=SelfService application 
+service-description-nl=SelfService applicatie
+
+contact-person-administrative-given-name=SURFConext
+contact-person-administrative-sur-name=SURFConext
+contact-person-administrative-email=beheer@surfconext.nl
+
+contact-person-technical-given-name=SURFConext
+contact-person-technical-sur-name=SURFConext
+contact-person-technical-email=beheer@surfconext.nl
+
+contact-person-support-given-name=SURFConext
+contact-person-support-sur-name=SURFConext
+contact-person-support-email=beheer@surfconext.nl
+```
+
+The actual matadata is available on the endpoint: "http://<hostname>/<component>/OpenSAML.sso/Metadata"
 
 ## Set properties for OpenSAML
 

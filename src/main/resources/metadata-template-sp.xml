@@ -1,39 +1,32 @@
 <?xml version="1.0"?>
-<!-- Set validUntil -->
-<!-- Enter the entityID of your SP. This is the unique identifier of your SP and must be an URN.
-     A common convertion is to use the URL where the meadata for you SP can be downloaded -->
 <md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:mdui="urn:oasis:names:tc:SAML:metadata:ui"
-    validUntil="2012-12-31T00:00:00Z"
-    entityID="https://yoursp.example.com/metadata">
+    validUntil="%VALID_UNTIL%"
+    entityID="%ENTITY_ID%">
     <md:SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
         <md:NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:persistent</md:NameIDFormat>
-        <!-- Specify the AssertionConsumerService Location of your SP. This is where SURFconext will POST the SAML Response -->
         <md:AssertionConsumerService 
             Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" 
-            Location="https://yoursp.example.com/metadata/consume-assertion" index="1"/>
+            Location="%ASSERTION_CONSUMER_SERVICE_URL%" index="1"/>
         <md:AttributeConsumingService index="1">
-            <md:ServiceName xml:lang="en">%SERVICENAME_EN%</md:ServiceName>
-            <md:ServiceName xml:lang="en">Voorbeeld Service Provider</md:ServiceName>
-            <md:ServiceDescription xml:lang="en">This is just an example</md:ServiceDescription>
-            <md:ServiceDescription xml:lang="nl">Dit is een voorbeeld</md:ServiceDescription>
+            <md:ServiceName xml:lang="en">%SERVICE_NAME_EN%</md:ServiceName>
+            <md:ServiceName xml:lang="en">%SERVICE_NAME_NL%</md:ServiceName>
+            <md:ServiceDescription xml:lang="en">%SERVICE_DESCRIPTION_EN%</md:ServiceDescription>
+            <md:ServiceDescription xml:lang="nl">%SERVICE_DESCRIPTION_NL%</md:ServiceDescription>
         </md:AttributeConsumingService>
     </md:SPSSODescriptor>
-    <!-- Provide the administrative contact for your service provider-->
     <md:ContactPerson contactType="administrative">
-        <md:GivenName>John</md:GivenName>
-        <md:SurName>Doe</md:SurName>
-        <md:EmailAddress>admin-contact@example.com</md:EmailAddress>
+        <md:GivenName>%CONTACT_PERSON_ADMINISTRATIVE_GIVEN_NAME%</md:GivenName>
+        <md:SurName>%CONTACT_PERSON_ADMINISTRATIVE_SUR_NAME%</md:SurName>
+        <md:EmailAddress>%CONTACT_PERSON_ADMINISTRATIVE_EMAIL%</md:EmailAddress>
     </md:ContactPerson>
-    <!-- Provide the technical contact for your service provider-->
     <md:ContactPerson contactType="technical">
-        <md:GivenName>Jane</md:GivenName>
-        <md:SurName>Doe</md:SurName>        
-        <md:EmailAddress>technical-contact@example.com</md:EmailAddress>
+        <md:GivenName>%CONTACT_PERSON_TECHNICAL_GIVEN_NAME%</md:GivenName>
+        <md:SurName>%CONTACT_PERSON_TECHNICAL_SUR_NAME%</md:SurName>
+        <md:EmailAddress>%CONTACT_PERSON_TECHNICAL_EMAIL%</md:EmailAddress>
     </md:ContactPerson>
-    <!-- Provide the support contact for your service provider. Provides support for end users-->
     <md:ContactPerson contactType="support">
-        <md:GivenName>Example.com</md:GivenName>
-        <md:SurName>Support</md:SurName>                
-        <md:EmailAddress>support-contact@example.com</md:EmailAddress>
+        <md:GivenName>%CONTACT_PERSON_SUPPORT_GIVEN_NAME%</md:GivenName>
+        <md:SurName>%CONTACT_PERSON_SUPPORT_SUR_NAME%</md:SurName>
+        <md:EmailAddress>%CONTACT_PERSON_SUPPORT_EMAIL%</md:EmailAddress>
     </md:ContactPerson>    
 </md:EntityDescriptor>

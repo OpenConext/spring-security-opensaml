@@ -17,11 +17,16 @@
 package nl.surfnet.spring.security.opensaml.controller;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
+import org.joda.time.DateTime;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.SingleSignOnService;
@@ -37,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Required;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -62,6 +68,8 @@ public class AuthnRequestController {
   private String entityID;
 
   private CredentialResolver credentialResolver;
+
+  private String metaDataProperties;
 
   public AuthnRequestController() {
     this.timeService = new TimeService();
@@ -127,21 +135,53 @@ public class AuthnRequestController {
      * therefore can't use the produces tag (see
      * https://jira.springsource.org/browse/SPR-6702). This could be resolved
      * but adding exclusions in the pom.xml, but this works and is not
-     * 'version-brittle"
+     * 'version-brittle'
      * 
      * see further https://rnd.feide.no/2010/01/05/
      * metadata_aggregation_requirements_specification/#section_5_5_3
      */
-    // TODO figure out what the best way is to inject the correct values into
-    // the AuthRequestController (e.g. this)
-    // TODO are we going to support signing (e.g. have two templates depending
-    // on the isSigning is true
-    // TODO documentation for SP's that want to use this
     response.setHeader("Content-Type", "application/xml");
+    DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+
     String result = IOUtils.toString(new ClassPathResource("metadata-template-sp.xml").getInputStream());
-    result = result.replaceAll("%SERVICENAME_EN%", "WIP");
+
+    result = result.replace("%VALID_UNTIL%", df.format(new DateTime().toDateMidnight().toDateTime().plusDays(1).toDate()));
+    result = result.replace("%ENTITY_ID%", entityID);
+    result = result.replace("%ASSERTION_CONSUMER_SERVICE_URL%", assertionConsumerServiceURL);
+
+    Properties props = new Properties();
+    props.load(new ClassPathResource("metadata.defaults.properties").getInputStream());
+
+    if (StringUtils.hasText(metaDataProperties)) {
+      ClassPathResource classPathResource = new ClassPathResource(metaDataProperties);
+      if (classPathResource.exists()) {
+        props.load(classPathResource.getInputStream());
+      }
+    }
+
+    result = result.replace("%SERVICE_NAME_EN%", props.getProperty("service-name-en"));
+    result = result.replace("%SERVICE_NAME_NL%", props.getProperty("service-name-nl"));
+    result = result.replace("%SERVICE_DESCRIPTION_EN%", props.getProperty("service-description-en"));
+    result = result.replace("%SERVICE_DESCRIPTION_NL%", props.getProperty("service-description-nl"));
+
+    result = result.replace("%CONTACT_PERSON_ADMINISTRATIVE_GIVEN_NAME%", props.getProperty("contact-person-administrative-given-name"));
+    result = result.replace("%CONTACT_PERSON_ADMINISTRATIVE_SUR_NAME%", props.getProperty("contact-person-administrative-sur-name"));
+    result = result.replace("%CONTACT_PERSON_ADMINISTRATIVE_EMAIL%", props.getProperty("contact-person-administrative-email"));
+
+    result = result.replace("%CONTACT_PERSON_TECHNICAL_GIVEN_NAME%", props.getProperty("contact-person-technical-given-name"));
+    result = result.replace("%CONTACT_PERSON_TECHNICAL_SUR_NAME%", props.getProperty("contact-person-technical-sur-name"));
+    result = result.replace("%CONTACT_PERSON_TECHNICAL_EMAIL%", props.getProperty("contact-person-technical-email"));
+
+    result = result.replace("%CONTACT_PERSON_SUPPORT_GIVEN_NAME%", props.getProperty("contact-person-support-given-name"));
+    result = result.replace("%CONTACT_PERSON_SUPPORT_SUR_NAME%", props.getProperty("contact-person-support-sur-name"));
+    result = result.replace("%CONTACT_PERSON_SUPPORT_EMAIL%", props.getProperty("contact-person-support-email"));
+
     response.getOutputStream().write(result.getBytes());
     response.flushBuffer();
 
+  }
+
+  public void setMetaDataProperties(String metaDataProperties) {
+    this.metaDataProperties = metaDataProperties;
   }
 }
