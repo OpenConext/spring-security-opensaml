@@ -20,9 +20,26 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Properties;
 
+import nl.surfnet.spring.security.opensaml.KeyStore;
+import nl.surfnet.spring.security.opensaml.SAMLMessageHandlerImpl;
+import nl.surfnet.spring.security.opensaml.SecurityPolicyDelegate;
+import nl.surfnet.spring.security.opensaml.crypt.KeyStoreCredentialResolverDelegate;
+
+import org.apache.velocity.app.VelocityEngine;
 import org.junit.Test;
+import org.opensaml.DefaultBootstrap;
+import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
+import org.opensaml.saml2.binding.decoding.HTTPPostSimpleSignDecoder;
+import org.opensaml.ws.security.SecurityPolicyResolver;
+import org.opensaml.ws.security.SecurityPolicyRule;
+import org.opensaml.ws.security.provider.StaticSecurityPolicyResolver;
+import org.opensaml.xml.parse.BasicParserPool;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.ui.velocity.VelocityEngineFactoryBean;
 
 /**
  * AuthnRequestControllerTest.java
@@ -56,14 +73,55 @@ public class AuthnRequestControllerTest {
 
   @Test
   public void test_metadata_with_default_metadata() throws IOException {
-    //just test for non %
+    // just test for non %
     getMetaData(null);
   }
 
   @Test
   public void test_metadata_with_wrong_configured_metadata() throws IOException {
-    //just test for non %
+    // just test for non %
     getMetaData("metadata.does.not.exists.properties");
+  }
+
+  @Test
+  public void test_send_authn_request_happy_flow() throws Exception {
+    DefaultBootstrap.bootstrap();
+    controller.setEntityID("http://entityid");
+    controller.setAssertionConsumerServiceURL("http://assertionConsumerServiceURL");
+    KeyStoreCredentialResolverDelegate delegate = new KeyStoreCredentialResolverDelegate();
+    delegate.setKeyStore(new KeyStore());
+    controller.setCredentialResolver(delegate);
+
+    SAMLMessageHandlerImpl samlMessageHandler = new SAMLMessageHandlerImpl(new HTTPPostSimpleSignDecoder(new BasicParserPool()),
+        new StaticSecurityPolicyResolver(new SecurityPolicyDelegate(new ArrayList<SecurityPolicyRule>())));
+    samlMessageHandler.setEntityId("http://entityid");
+    samlMessageHandler.setVelocityEngine(velocityEngine());
+    samlMessageHandler.setNeedsSigning(false);
+
+    controller.setSAMLMessageHandler(samlMessageHandler);
+
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    MockHttpServletResponse response = new MockHttpServletResponse();
+
+    controller.commence("http://localhost:324", request, response);
+    
+    String content = response.getContentAsString();
+    assertTrue(content.contains("<input type=\"hidden\" name=\"SAMLRequest\""));
+  }
+
+  protected VelocityEngine velocityEngine() {
+    final VelocityEngineFactoryBean velocityEngineFactoryBean = new VelocityEngineFactoryBean();
+    velocityEngineFactoryBean.setPreferFileSystemAccess(false);
+    Properties velocityEngineProperties = new Properties();
+    velocityEngineProperties.setProperty("resource.loader", "classpath");
+    velocityEngineProperties.setProperty("classpath.resource.loader.class",
+        "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
+    velocityEngineFactoryBean.setVelocityProperties(velocityEngineProperties);
+    try {
+      return velocityEngineFactoryBean.createVelocityEngine();
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to create velocity engine instance");
+    }
   }
 
   private String getMetaData(String metaDataProperties) throws IOException, UnsupportedEncodingException {

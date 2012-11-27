@@ -131,13 +131,7 @@ public class AuthnRequestController {
   @RequestMapping(value = { "/OpenSAML.sso/Metadata" }, method = RequestMethod.GET)
   public void metaData(HttpServletResponse response) throws IOException {
     /*
-     * The old-fashioned way as Spring Security uses Spring < 3.1 and we
-     * therefore can't use the produces tag (see
-     * https://jira.springsource.org/browse/SPR-6702). This could be resolved
-     * but adding exclusions in the pom.xml, but this works and is not
-     * 'version-brittle'
-     * 
-     * see further https://rnd.feide.no/2010/01/05/
+     * see https://rnd.feide.no/2010/01/05/
      * metadata_aggregation_requirements_specification/#section_5_5_3
      */
     response.setHeader("Content-Type", "application/xml");
