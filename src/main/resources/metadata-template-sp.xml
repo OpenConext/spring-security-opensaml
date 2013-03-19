@@ -3,7 +3,7 @@
     validUntil="%VALID_UNTIL%"
     entityID="%ENTITY_ID%">
     <md:SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
-        <md:NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:persistent</md:NameIDFormat>
+        <md:NameIDFormat>%NAMEID_FORMAT%</md:NameIDFormat>
         <md:AssertionConsumerService 
             Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" 
             Location="%ASSERTION_CONSUMER_SERVICE_URL%" index="1"/>

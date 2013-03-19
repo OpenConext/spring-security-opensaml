@@ -19,11 +19,16 @@ package nl.surfnet.spring.security.opensaml.controller;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import nl.surfnet.spring.security.opensaml.AuthnRequestGenerator;
+import nl.surfnet.spring.security.opensaml.SAMLMessageHandler;
+import nl.surfnet.spring.security.opensaml.util.IDService;
+import nl.surfnet.spring.security.opensaml.util.TimeService;
+import nl.surfnet.spring.security.opensaml.xml.EndpointGenerator;
 
 import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
@@ -46,13 +51,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-
-import nl.surfnet.spring.security.opensaml.AuthnRequestGenerator;
-import nl.surfnet.spring.security.opensaml.SAMLMessageHandler;
-import nl.surfnet.spring.security.opensaml.util.IDService;
-import nl.surfnet.spring.security.opensaml.util.TimeService;
-import nl.surfnet.spring.security.opensaml.xml.EndpointGenerator;
 
 @Controller
 public class AuthnRequestController {
@@ -152,6 +150,8 @@ public class AuthnRequestController {
         props.load(classPathResource.getInputStream());
       }
     }
+
+    result = result.replace("%NAMEID_FORMAT%", props.getProperty("nameid-format"));
 
     result = result.replace("%SERVICE_NAME_EN%", props.getProperty("service-name-en"));
     result = result.replace("%SERVICE_NAME_NL%", props.getProperty("service-name-nl"));
