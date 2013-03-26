@@ -25,7 +25,7 @@
 
   <groupId>org.surfnet.coin</groupId>
   <artifactId>spring-security-opensaml</artifactId>
-  <version>3.2.0-SNAPSHOT</version>
+  <version>3.2.0</version>
 
   <inceptionYear>2012</inceptionYear>
   <url>http://www.openconext.org</url>
