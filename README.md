@@ -1,11 +1,16 @@
-# Spring Security OpenSAML
+# _Don't use this library_
 
+***Update August 2014:*** This plugin is deprecated. Instead, use the recently released [spring-security-saml](http://projects.spring.io/spring-security-saml/) plugin as developed by SpringSource / Pivotal. It is superior in every way.
+
+This codebase will not be maintained any further. Do not expect any more releases, not even bugfixes. Migrate your existing projects. 
+
+# Introduction
 This is an Spring Security module for authentication and authorization with Security Assertion Markup Language.
 It uses the [OpenSAML library](http://www.opensaml.org/) from Internet2.
 
 This documentation contains references to identity providers in a closed development environment. Replace them with the URLs and certificates of your own identity provider.
 
-## Add the Spring Security OpenSAML dependency
+# Add the Spring Security OpenSAML dependency
 
 Add the following dependency to your project (check this project for the latest version)
 
@@ -17,9 +22,9 @@ Add the following dependency to your project (check this project for the latest 
 </dependency>
 ```
 
-## Configure Spring security context
+# Configure Spring security context
 
-### Create a provisioner
+## Create a provisioner
 
 When a user logs in, your application can create or update its existing profile.
 Create a class that implements the `nl.surfnet.spring.security.opensaml.Provisioner` interface.
@@ -29,7 +34,7 @@ Next, create a bean of this class in your Spring context.
 <bean id="samlProvisioner" class="org.example.project.provisioning.SAMLProvisioner"/>
 ```
 
-### Add the certificates of your IDP
+## Add the certificates of your IDP
 
 ```xml
 <bean id="samlCertificateStore" class="nl.surfnet.spring.security.opensaml.CertificateStoreImpl">
@@ -42,7 +47,7 @@ Next, create a bean of this class in your Spring context.
 </bean>
 ```
 
-### Create a service provider
+## Create a service provider
 
 ```xml
 <opensaml:service-provider id="samlAuthenticationProvider"
@@ -55,7 +60,7 @@ Next, create a bean of this class in your Spring context.
                          authentication-manager-ref="authenticationManager" />
 ```
 
-### Add security filter chain configuration
+## Add security filter chain configuration
 
 Within `<security:http>` add the following configuration
 
@@ -73,7 +78,7 @@ Within `<security:http>` add the following configuration
 </security:authentication-manager>
 ```
 
-### Add an AuthN request controller
+## Add an AuthN request controller
 
 ```xml
 <bean id="authnRequestController" class="nl.surfnet.spring.security.opensaml.controller.AuthnRequestController">
@@ -108,7 +113,7 @@ contact-person-support-email=beheer@surfconext.nl
 
 The actual matadata is available on the endpoint: "http://hostname/applicationroot/OpenSAML.sso/Metadata"
 
-## Set properties for OpenSAML
+# Set properties for OpenSAML
 
 Add a properties file for the Spring Security OpenSAML configuration (in this example `opensaml.properties`):
 
@@ -138,9 +143,9 @@ Load this property file from your application context:
 ```
 
 
-## Configure the login page
+# Configure the login page
 
-### Create a dispatcher servlet
+## Create a dispatcher servlet
 
 Create an `opensaml-dispatcher-servlet.xml` file inside the `WEB-INF` folder with the following contents:
 
@@ -162,7 +167,7 @@ Create an `opensaml-dispatcher-servlet.xml` file inside the `WEB-INF` folder wit
 </bean>
 ```
 
-### Configure the web.xml
+## Configure the web.xml
 
 Add a filter-mapping for the Spring Security filter chain and the servlet-mapping for the OpenSAML.sso/Login url:
 
@@ -189,7 +194,7 @@ Add a filter-mapping for the Spring Security filter chain and the servlet-mappin
 </servlet-mapping>
 ```
 
-### Create either a redirect or a WAYF page
+## Create either a redirect or a WAYF page
 
 When your application requires a user is logged in you can redirect it to the AuthN request controller.
 
