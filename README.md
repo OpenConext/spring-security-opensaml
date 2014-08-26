@@ -1,6 +1,6 @@
 # _Don't use this library_
 
-***Update August 2014:*** This plugin is deprecated. Instead, use the recently released [spring-security-saml](http://projects.spring.io/spring-security-saml/) plugin as developed by SpringSource / Pivotal. It is superior in every way.
+***Update August 2014:*** This plugin is deprecated. Instead, use the recently released [spring-security-saml](http://projects.spring.io/spring-security-saml/) plugin as developed by SpringSource / Pivotal. It is superior in every way. Most likely, you app will require only basic integration with SAML. Consider proxying your app with Apache Httpd and using it's excellent [Shibboleth module](https://wiki.shibboleth.net/confluence/display/SHIB2/NativeSPApacheConfig) to take care of all the SAML stuff for you. If you need help figuring out which choice is right for you, read [this Stackoverflow post](http://stackoverflow.com/questions/22908548/single-sign-on-in-spring-by-using-saml-extension-and-shibboleth).
 
 This codebase will not be maintained any further. Do not expect any more releases, not even bugfixes. Migrate your existing projects. 
 
