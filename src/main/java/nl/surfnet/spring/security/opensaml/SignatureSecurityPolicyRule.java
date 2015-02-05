@@ -67,8 +67,6 @@ public class SignatureSecurityPolicyRule implements InitializingBean, SecurityPo
 
     public void afterPropertiesSet() throws Exception {
 
-        System.out.println("Aap " + Configuration.getGlobalSecurityConfiguration());
-
         KeyInfoCredentialResolver keyInfoCredResolver =
                 Configuration.getGlobalSecurityConfiguration().getDefaultKeyInfoCredentialResolver();
 
